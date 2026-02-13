@@ -128,7 +128,7 @@ if not df.empty:
                 fig.update_layout(xaxis_title="", yaxis_title="", plot_bgcolor='rgba(0,0,0,0)', height=400)
                 fig.update_traces(texttemplate='%{text:,.0f}', textposition='outside')
                 
-                # --- هنا كان الخطأ، وضفنا المفتاح (key) لحله ---
+                # --- حل مشكلة التكرار (Duplicate ID) ---
                 st.plotly_chart(fig, use_container_width=True, key=f"chart_{i}")
                 
                 leader = level_df.iloc[-1]
@@ -138,11 +138,6 @@ if not df.empty:
                 st.info(f"لا توجد بيانات مسجلة لـ {level_name} حتى الآن.")
 
     st.divider()
-
-    # --- بيانات التأكد (Debug) ---
-    with st.expander("🕵️‍♂️ عرض البيانات الخام (تأكد من تحديث قوقل شيت)"):
-        st.write("البيانات كما وصلت من Google Sheets:")
-        st.dataframe(df)
 
     # --- الحسابات البنكية ---
     with st.expander("💳 أرقام الحسابات"):
