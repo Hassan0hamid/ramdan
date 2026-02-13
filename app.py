@@ -9,7 +9,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- 2. تنسيق CSS (عام) ---
+# --- 2. تنسيق CSS ---
 st.markdown("""
 <style>
     /* اتجاه الصفحة */
@@ -19,8 +19,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. دالة لرسم الكروت (Custom HTML) ---
-# الدالة دي بتبني الكرت بتصميم HTML عشان نضمن الألوان 100%
+# --- 3. دالة لرسم الكروت (تضمن الألوان 100%) ---
 def custom_card(title, value, sub_value=None):
     st.markdown(f"""
     <div style="
@@ -39,9 +38,10 @@ def custom_card(title, value, sub_value=None):
     """, unsafe_allow_html=True)
 
 # --- 4. تحميل البيانات ---
+# الرابط الخاص بك
 sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQpVaFIFaIybxYXbO6ECjCzUFVRiVERCTKy6D-hFRPyKkzwzwDgJamRCuDBHfKCsg85m5vM9fBbVf1U/pub?output=csv"
 
-@st.cache_data(ttl=60) # تحديث كل 60 ثانية
+@st.cache_data(ttl=60)
 def load_data(url):
     try:
         df = pd.read_csv(url)
@@ -52,12 +52,11 @@ def load_data(url):
         # توحيد الهمزات في المستويات
         if 'المستوى' in df.columns:
             df['المستوى'] = df['المستوى'].astype(str).str.strip()
-            df['المستوى'] = df['المستوى'].str.replace(r'[أإآ]ل', 'ال', regex=True) # توحيد كل الألفات
-            df['المستوى'] = df['المستوى'].str.replace('الاول', 'الأول') # تصحيح نهائي
+            df['المستوى'] = df['المستوى'].str.replace(r'[أإآ]ل', 'ال', regex=True) 
+            df['المستوى'] = df['المستوى'].str.replace('الاول', 'الأول')
             df['المستوى'] = df['المستوى'].str.replace('ألاول', 'الأول')
 
-        # تنظيف الأرقام (أهم خطوة)
-        # بنحولها لنص، نمسح أي حاجة ما رقم، ونحولها لرقم تاني
+        # تنظيف الأرقام (تحويل لنص ثم مسح الحروف ثم تحويل لرقم)
         df['المبلغ'] = df['المبلغ'].astype(str).str.replace(r'[^\d.]', '', regex=True)
         df['المبلغ'] = pd.to_numeric(df['المبلغ'], errors='coerce').fillna(0)
         
@@ -76,6 +75,7 @@ except:
 
 if not df.empty:
     st.title("🌙 وسابقوا..")
+    st.markdown("<h5 style='text-align: center; color: gray;'>منافسة الخير - كلية الهندسة والعمارة</h5>", unsafe_allow_html=True)
     
     # الحسابات
     TARGET_AMOUNT = 38000000
@@ -85,7 +85,7 @@ if not df.empty:
     bags_collected = int(total_collected / BAG_COST)
     progress = total_collected / TARGET_AMOUNT
 
-    # --- عرض الكروت المخصصة (الحل لمشكلة الألوان) ---
+    # عرض الكروت المخصصة
     col1, col2, col3 = st.columns(3)
     with col1:
         custom_card("💰 المجموع الكلي", f"{total_collected:,.0f}")
@@ -100,16 +100,15 @@ if not df.empty:
     # --- ساحة التنافس ---
     st.subheader("🏆 ترتيب الأقسام")
     
-    # القائمة الموحدة
     levels_order = ["الأول", "الثاني", "الثالث", "الرابع", "الخامس"]
     tabs = st.tabs(levels_order)
     
     for i, level_name in enumerate(levels_order):
         with tabs[i]:
             # تنظيف ومطابقة الاسم للبحث
-            search_name = level_name.replace("أ", "ا").replace("إ", "ا") # تبسيط للبحث
+            search_name = level_name.replace("أ", "ا").replace("إ", "ا")
             
-            # فلترة مرنة (تبحث عن الكلمة حتى لو الهمزة اختلفت)
+            # فلترة مرنة
             current_level_data = df[df['المستوى'].str.contains(level_name, na=False) | 
                                     df['المستوى'].str.contains(search_name, na=False)]
             
@@ -128,7 +127,9 @@ if not df.empty:
                 fig.add_vline(x=570000, line_dash="dash", line_color="green", annotation_text="هدف 3 حقائب")
                 fig.update_layout(xaxis_title="", yaxis_title="", plot_bgcolor='rgba(0,0,0,0)', height=400)
                 fig.update_traces(texttemplate='%{text:,.0f}', textposition='outside')
-                st.plotly_chart(fig, use_container_width=True)
+                
+                # --- هنا كان الخطأ، وضفنا المفتاح (key) لحله ---
+                st.plotly_chart(fig, use_container_width=True, key=f"chart_{i}")
                 
                 leader = level_df.iloc[-1]
                 if leader['المبلغ'] > 0:
@@ -138,12 +139,10 @@ if not df.empty:
 
     st.divider()
 
-    # --- 🔍 قسم التأكد من البيانات (Debug) ---
-    # القسم ده حيوريك الموقع قاري شنو بالضبط من الشيت
-    with st.expander("🕵️‍♂️ عرض البيانات الخام (للتأكد من القراءة الصحيحة)"):
+    # --- بيانات التأكد (Debug) ---
+    with st.expander("🕵️‍♂️ عرض البيانات الخام (تأكد من تحديث قوقل شيت)"):
         st.write("البيانات كما وصلت من Google Sheets:")
         st.dataframe(df)
-        st.caption("لو الأرقام هنا قديمة، معناها قوقل لسه ما حدث الرابط. انتظر 5 دقايق واضغط تحديث.")
 
     # --- الحسابات البنكية ---
     with st.expander("💳 أرقام الحسابات"):
@@ -158,7 +157,7 @@ if not df.empty:
         """, unsafe_allow_html=True)
 
 else:
-    st.error("⚠️ جاري تحميل البيانات... لو طولت تأكد من الرابط.")
+    st.error("⚠️ جاري تحميل البيانات...")
 
 # زر التحديث
 if st.button('🔄 تحديث البيانات الآن'):
