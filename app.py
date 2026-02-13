@@ -16,10 +16,21 @@ st.markdown("""
     .stApp { direction: rtl; text-align: right; }
     h1, h2, h3 { font-family: 'Tajawal', sans-serif; color: #1f77b4; text-align: center; }
     .stTabs [data-baseweb="tab-list"] { justify-content: center; }
+    
+    /* تنسيق التوقيع */
+    .footer {
+        text-align: center;
+        margin-top: 50px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        font-size: 12px;
+        color: #888;
+        font-family: 'Tajawal', sans-serif;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. دالة لرسم الكروت (تضمن الألوان 100%) ---
+# --- 3. دالة لرسم الكروت ---
 def custom_card(title, value, sub_value=None):
     st.markdown(f"""
     <div style="
@@ -56,7 +67,7 @@ def load_data(url):
             df['المستوى'] = df['المستوى'].str.replace('الاول', 'الأول')
             df['المستوى'] = df['المستوى'].str.replace('ألاول', 'الأول')
 
-        # تنظيف الأرقام (تحويل لنص ثم مسح الحروف ثم تحويل لرقم)
+        # تنظيف الأرقام
         df['المبلغ'] = df['المبلغ'].astype(str).str.replace(r'[^\d.]', '', regex=True)
         df['المبلغ'] = pd.to_numeric(df['المبلغ'], errors='coerce').fillna(0)
         
@@ -67,7 +78,6 @@ def load_data(url):
 df = load_data(sheet_url)
 
 # --- 5. العرض الرئيسي ---
-# صورة البوستر
 try:
     st.image("poster.jpeg", use_container_width=True) 
 except:
@@ -85,7 +95,7 @@ if not df.empty:
     bags_collected = int(total_collected / BAG_COST)
     progress = total_collected / TARGET_AMOUNT
 
-    # عرض الكروت المخصصة
+    # عرض الكروت
     col1, col2, col3 = st.columns(3)
     with col1:
         custom_card("💰 المجموع الكلي", f"{total_collected:,.0f}")
@@ -128,7 +138,7 @@ if not df.empty:
                 fig.update_layout(xaxis_title="", yaxis_title="", plot_bgcolor='rgba(0,0,0,0)', height=400)
                 fig.update_traces(texttemplate='%{text:,.0f}', textposition='outside')
                 
-                # --- حل مشكلة التكرار (Duplicate ID) ---
+                # الرسم البياني
                 st.plotly_chart(fig, use_container_width=True, key=f"chart_{i}")
                 
                 leader = level_df.iloc[-1]
@@ -150,6 +160,14 @@ if not df.empty:
         📲 **لإرسال الإشعار:** `0112551093`
         </div>
         """, unsafe_allow_html=True)
+         
+    # --- التوقيع (Footer) ---
+    st.markdown("""
+    <div class="footer">
+    تم التطوير بواسطة: حسن حامد ❤️<br>
+    بالتوفيق لكل الدفعات
+    </div>
+    """, unsafe_allow_html=True)
 
 else:
     st.error("⚠️ جاري تحميل البيانات...")
