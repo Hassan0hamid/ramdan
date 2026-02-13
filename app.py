@@ -164,7 +164,7 @@ if not df.empty:
     # --- التوقيع (Footer) ---
     st.markdown("""
     <div class="footer">
-    تم التطوير بواسطة: حسن حامد ❤️<br>
+    تم التطوير بواسطة: حسن حامد <br>
     بالتوفيق لكل الدفعات
     </div>
     """, unsafe_allow_html=True)
