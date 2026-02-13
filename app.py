@@ -3,89 +3,131 @@ import pandas as pd
 import plotly.express as px
 
 # --- إعدادات الصفحة ---
-st.set_page_config(page_title="تحدي الخير - رمضان", layout="centered")
+st.set_page_config(
+    page_title="الحقيبة الرمضانية - هندسة وعمارة",
+    page_icon="🌙",
+    layout="centered"
+)
 
-# --- دالة لجلب البيانات من قوقل شيت ---
-# بنعمل cache عشان ما يحمل من الشيت كل ثانية، بس كل ما شخص يدخل
-@st.cache_data(ttl=60) 
-def load_data(sheet_url):
-    # قراءة ملف الـ CSV مباشرة من الرابط
-    df = pd.read_csv(sheet_url)
-    return df
+# --- تنسيق CSS (عربي + ألوان الهوية) ---
+st.markdown("""
+<style>
+    .stApp { direction: rtl; text-align: right; }
+    h1, h2, h3 { font-family: 'Tajawal', sans-serif; color: #1f77b4; text-align: center; }
+    .metric-card { background-color: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #ddd; text-align: center; }
+    .stTabs [data-baseweb="tab-list"] { justify-content: center; }
+</style>
+""", unsafe_allow_html=True)
 
-# --- 🔴 هام: خت الرابط حقك هنا مكان الرابط ده ---
-sheet_url =  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQpVaFIFaIybxYXbO6ECjCzUFVRiVERCTKy6D-hFRPyKkzwzwDgJamRCuDBHfKCsg85m5vM9fBbVf1U/pub?output=csv" 
-
+# --- 🖼️ صورة البوستر ---
+# (ارفع صورة البوستر في نفس المكان في GitHub وسميها poster.jpeg)
 try:
-    # تحميل البيانات
-    df = load_data(sheet_url)
+    st.image("poster.jpeg", use_container_width=True) 
+except:
+    st.warning("صورة البوستر ما موجودة، تأكد من رفعها باسم poster.jpeg")
 
-    # --- العنوان والهدف ---
-    st.title("🌙 سباق الخير - حملة إفطار رمضان")
-    st.markdown("### المنافسة بين الدفع والأقسام 🔥")
+# --- 📥 تحميل البيانات ---
+# ⚠️ استبدل الرابط ده بالرابط حقك (ما تنسى علامات التنصيص "")
+sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQpVaFIFaIybxYXbO6ECjCzUFVRiVERCTKy6D-hFRPyKkzwzwDgJamRCuDBHfKCsg85m5vM9fBbVf1U/pub?output=csv"
 
-    # حساب الإجماليات
-    target_amount = 5000000  # مثلاً الهدف 5 مليون (عدلها براحتك)
-    total_collected = df['المبلغ'].sum()
-    progress = total_collected / target_amount
+@st.cache_data(ttl=60)
+def load_data(url):
+    try:
+        df = pd.read_csv(url)
+        return df
+    except:
+        return pd.DataFrame() # لو في خطأ يرجع داتا فاضية
 
-    # عرض العداد الكبير
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric(label="إجمالي التبرعات", value=f"{total_collected:,.0f} SDG")
-    with col2:
-        st.metric(label="المتبقي للهدف", value=f"{target_amount - total_collected:,.0f} SDG")
+df = load_data(sheet_url)
 
-    # شريط التقدم
-    st.progress(min(progress, 1.0))
-    st.caption(f"تم جمع {progress*100:.1f}% من الهدف الكلي")
-
-    st.markdown("---")
-
-    # --- معالجة البيانات للمنافسة (تجميع حسب القسم) ---
-    # بنجمع قروش كل قسم مع بعض
-    competitors = df.groupby('القسم')['المبلغ'].sum().reset_index()
-    # ترتيبهم من الأكثر للأقل
-    competitors = competitors.sort_values(by='المبلغ', ascending=False)
-
-    # --- الرسم البياني (السباق) ---
-    st.subheader("📊 مؤشر المنافسة")
-    fig = px.bar(
-        competitors, 
-        x='المبلغ', 
-        y='القسم', 
-        orientation='h', # شريط أفقي عشان الأسماء تكون واضحة
-        text='المبلغ', 
-        color='القسم',
-        title="ترتيب الأقسام حسب المساهمة"
-    )
-    fig.update_traces(texttemplate='%{text:.2s}', textposition='outside')
-    st.plotly_chart(fig, use_container_width=True)
-
-    # --- لوحة الصدارة (Leaderboard Table) ---
-    st.subheader("🏆 لوحة المتصدرين")
+if not df.empty:
+    # --- 📊 الإحصائيات العامة ---
+    st.title("🌙 وسابقوا..")
+    st.markdown("<h4 style='text-align: center; color: gray;'>حملة الحقيبة الرمضانية - كليتي الهندسة والعمارة</h4>", unsafe_allow_html=True)
     
-    # تنسيق الجدول
-    st.dataframe(
-        competitors,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "القسم": "الدفعة / القسم",
-            "المبلغ": st.column_config.ProgressColumn(
-                "حجم المساهمة",
-                format="%d SDG",
-                min_value=0,
-                max_value=int(competitors['المبلغ'].max())
-            )
-        }
-    )
+    TARGET_AMOUNT = 38000000  # 38 مليون
+    BAG_COST = 190000         # تكلفة الحقيبة
+    TARGET_BAGS = 200         # 200 حقيبة
 
-except Exception as e:
-    st.error("⚠️ في مشكلة في رابط الشيت. تأكد إنك عملت 'Publish to Web' واخترت CSV.")
-    st.write(e)
+    total_collected = df['المبلغ'].sum()
+    bags_collected = int(total_collected / BAG_COST)
+    progress = total_collected / TARGET_AMOUNT
 
-# زر تحديث يدوي
-if st.button('تحديث البيانات 🔄'):
+    # عرض العدادات
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("💰 المجموع الكلي", f"{total_collected:,.0f} ج.س")
+    with col2:
+        st.metric("🎒 حقائب تم تأمينها", f"{bags_collected} من {TARGET_BAGS}")
+    with col3:
+        st.metric("📉 نسبة الإنجاز", f"{progress*100:.1f}%")
+
+    st.progress(min(progress, 1.0))
+    
+    st.divider()
+
+    # --- 🔥 ساحة التنافس (حسب المستويات) ---
+    st.subheader("🏆 منافسات الدفعات والأقسام")
+    st.info("الهدف لكل قسم: 3 حقائب رمضانية (570,000 ج.س) 🎯")
+
+    # تبويبات للمستويات
+    tabs = st.tabs(["المستوى الأول", "المستوى الثاني", "المستوى الثالث", "المستوى الرابع", "المستوى الخامس"])
+    
+    levels_map = {
+        "المستوى الأول": tabs[0], "المستوى الثاني": tabs[1], 
+        "المستوى الثالث": tabs[2], "المستوى الرابع": tabs[3], "المستوى الخامس": tabs[4]
+    }
+
+    # اللوجيك لكل تاب
+    for level_name, tab in levels_map.items():
+        with tab:
+            # فلترة البيانات حسب المستوى
+            level_df = df[df['المستوى'] == level_name]
+            
+            if not level_df.empty:
+                # تجميع المبالغ للأقسام في هذا المستوى
+                dept_group = level_df.groupby('القسم')['المبلغ'].sum().reset_index()
+                dept_group = dept_group.sort_values(by='المبلغ', ascending=True)
+
+                # رسم بياني
+                fig = px.bar(
+                    dept_group, x='المبلغ', y='القسم', orientation='h',
+                    text='المبلغ', color='المبلغ', color_continuous_scale='Blues'
+                )
+                
+                # خط الهدف (3 حقائب)
+                fig.add_vline(x=570000, line_dash="dash", line_color="green", annotation_text="هدف الـ 3 حقائب")
+                
+                fig.update_layout(xaxis_title="المساهمة (ج.س)", yaxis_title="", plot_bgcolor='rgba(0,0,0,0)')
+                fig.update_traces(texttemplate='%{text:.2s}')
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # المتصدر
+                leader = dept_group.iloc[-1]
+                if leader['المبلغ'] >= 570000:
+                     st.success(f"🥇 المتصدر حالياً: {leader['القسم']} (تجاوزوا هدف الـ 3 حقائب!)")
+                else:
+                     st.write(f"🥇 المتصدر حالياً: {leader['القسم']}")
+
+            else:
+                st.write("لا توجد بيانات مسجلة لهذا المستوى حتى الآن.")
+
+    st.divider()
+
+    # --- 💳 طرق المساهمة ---
+    with st.expander("💳 اضغط هنا لعرض حسابات التبرع", expanded=False):
+        st.markdown("""
+        **بنك الخرطوم (بنكك):** `4195521` - زبيدة فؤاد عثمان
+        **بنك فيصل (فوري):** `52092340` - محمد جلال الدين الشيخ
+        **بنك أمدرمان الوطني (أوكاش):** `643344` - محمد جلال الدين الشيخ
+        
+        📲 **تأكد من إرسال الإشعار على الرقم:** `0112551093`
+        """)
+
+else:
+    st.error("⚠️ الرجاء التأكد من رابط ملف Google Sheet ووضعه داخل علامات تنصيص.")
+
+# زر تحديث
+if st.button('🔄 تحديث القائمة'):
     st.cache_data.clear()
     st.rerun()
