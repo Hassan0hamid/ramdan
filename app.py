@@ -2,53 +2,56 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# --- إعدادات الصفحة ---
+# --- 1. إعدادات الصفحة ---
 st.set_page_config(
     page_title="الحقيبة الرمضانية - هندسة وعمارة",
     page_icon="🌙",
     layout="centered"
 )
 
-# --- تنسيق CSS (عربي + ألوان الهوية) ---
+# --- 2. تنسيق CSS (لجعل التطبيق عربي وجميل) ---
 st.markdown("""
 <style>
     .stApp { direction: rtl; text-align: right; }
     h1, h2, h3 { font-family: 'Tajawal', sans-serif; color: #1f77b4; text-align: center; }
-    .metric-card { background-color: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #ddd; text-align: center; }
+    .stMetric { background-color: #f0f2f6; padding: 10px; border-radius: 10px; text-align: center; border: 1px solid #ddd; }
     .stTabs [data-baseweb="tab-list"] { justify-content: center; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 🖼️ صورة البوستر ---
-# (ارفع صورة البوستر في نفس المكان في GitHub وسميها poster.jpeg)
+# --- 3. صورة البوستر (لو رفعتها) ---
 try:
     st.image("poster.jpeg", use_container_width=True) 
 except:
-    st.warning("صورة البوستر ما موجودة، تأكد من رفعها باسم poster.jpeg")
+    pass
 
-# --- 📥 تحميل البيانات ---
-# ⚠️ استبدل الرابط ده بالرابط حقك (ما تنسى علامات التنصيص "")
+# --- 4. تحميل البيانات ---
+# ⚠️⚠️ هام: خت رابط ملف الـ CSV حقك هنا بين علامات التنصيص
 sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQpVaFIFaIybxYXbO6ECjCzUFVRiVERCTKy6D-hFRPyKkzwzwDgJamRCuDBHfKCsg85m5vM9fBbVf1U/pub?output=csv"
 
 @st.cache_data(ttl=60)
 def load_data(url):
     try:
         df = pd.read_csv(url)
+        # تنظيف الأرقام: تحويلها لأرقام وحساب المجموع لو في تكرار
+        df['المبلغ'] = pd.to_numeric(df['المبلغ'], errors='coerce').fillna(0)
         return df
-    except:
-        return pd.DataFrame() # لو في خطأ يرجع داتا فاضية
+    except Exception as e:
+        return pd.DataFrame()
 
 df = load_data(sheet_url)
 
 if not df.empty:
-    # --- 📊 الإحصائيات العامة ---
+    # --- 5. الإحصائيات العامة (العدادات) ---
     st.title("🌙 وسابقوا..")
-    st.markdown("<h4 style='text-align: center; color: gray;'>حملة الحقيبة الرمضانية - كليتي الهندسة والعمارة</h4>", unsafe_allow_html=True)
+    st.markdown("<h5 style='text-align: center; color: gray;'>منافسة الخير - كلية الهندسة والعمارة</h5>", unsafe_allow_html=True)
     
-    TARGET_AMOUNT = 38000000  # 38 مليون
-    BAG_COST = 190000         # تكلفة الحقيبة
-    TARGET_BAGS = 200         # 200 حقيبة
+    # الثوابت
+    TARGET_AMOUNT = 38000000
+    BAG_COST = 190000
+    TARGET_BAGS = 200
 
+    # الحسابات
     total_collected = df['المبلغ'].sum()
     bags_collected = int(total_collected / BAG_COST)
     progress = total_collected / TARGET_AMOUNT
@@ -56,78 +59,68 @@ if not df.empty:
     # عرض العدادات
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("💰 المجموع الكلي", f"{total_collected:,.0f} ج.س")
+        st.metric("💰 المجموع الكلي", f"{total_collected:,.0f}")
     with col2:
-        st.metric("🎒 حقائب تم تأمينها", f"{bags_collected} من {TARGET_BAGS}")
+        st.metric("🎒 حقيبة رمضانية", f"{bags_collected}")
     with col3:
         st.metric("📉 نسبة الإنجاز", f"{progress*100:.1f}%")
 
     st.progress(min(progress, 1.0))
-    
     st.divider()
 
-    # --- 🔥 ساحة التنافس (حسب المستويات) ---
-    st.subheader("🏆 منافسات الدفعات والأقسام")
-    st.info("الهدف لكل قسم: 3 حقائب رمضانية (570,000 ج.س) 🎯")
-
-    # تبويبات للمستويات
-    tabs = st.tabs(["المستوى الأول", "المستوى الثاني", "المستوى الثالث", "المستوى الرابع", "المستوى الخامس"])
+    # --- 6. ساحة التنافس (الرسم البياني) ---
+    st.subheader("🏆 ترتيب الأقسام حسب المستويات")
     
-    levels_map = {
-        "المستوى الأول": tabs[0], "المستوى الثاني": tabs[1], 
-        "المستوى الثالث": tabs[2], "المستوى الرابع": tabs[3], "المستوى الخامس": tabs[4]
-    }
-
-    # اللوجيك لكل تاب
-    for level_name, tab in levels_map.items():
-        with tab:
-            # فلترة البيانات حسب المستوى
-            level_df = df[df['المستوى'] == level_name]
+    # قائمة المستويات بنفس طريقة كتابتك في الشيت بالضبط
+    # (لاحظ: كتبت "ألاول" بالهمزة زي ما انت كاتبها في البيانات)
+    levels_order = ["ألاول", "الثاني", "الثالث", "الرابع", "الخامس"]
+    
+    # إنشاء التبويبات
+    tabs = st.tabs(levels_order)
+    
+    for i, level_name in enumerate(levels_order):
+        with tabs[i]:
+            # تصفية البيانات حسب المستوى
+            # بنجمع البيانات عشان لو في سطرين لنفس القسم يجمعهم (مثلاً مدني دفعوا مرتين)
+            level_df = df[df['المستوى'] == level_name].groupby('القسم')['المبلغ'].sum().reset_index()
             
             if not level_df.empty:
-                # تجميع المبالغ للأقسام في هذا المستوى
-                dept_group = level_df.groupby('القسم')['المبلغ'].sum().reset_index()
-                dept_group = dept_group.sort_values(by='المبلغ', ascending=True)
+                # ترتيب الداتا من الأكبر للأصغر
+                level_df = level_df.sort_values(by='المبلغ', ascending=True)
 
-                # رسم بياني
+                # الرسم البياني
                 fig = px.bar(
-                    dept_group, x='المبلغ', y='القسم', orientation='h',
-                    text='المبلغ', color='المبلغ', color_continuous_scale='Blues'
+                    level_df, 
+                    x='المبلغ', 
+                    y='القسم', 
+                    orientation='h',
+                    text='المبلغ', 
+                    color='المبلغ', 
+                    color_continuous_scale='Blues',
+                    title=f"منافسة المستوى {level_name}"
                 )
                 
-                # خط الهدف (3 حقائب)
-                fig.add_vline(x=570000, line_dash="dash", line_color="green", annotation_text="هدف الـ 3 حقائب")
+                # خط الهدف (3 حقائب = 570,000)
+                target_line = 570000
+                fig.add_vline(x=target_line, line_dash="dash", line_color="green", annotation_text="هدف 3 حقائب")
                 
-                fig.update_layout(xaxis_title="المساهمة (ج.س)", yaxis_title="", plot_bgcolor='rgba(0,0,0,0)')
-                fig.update_traces(texttemplate='%{text:.2s}')
+                # تحسين الشكل
+                fig.update_layout(xaxis_title="", yaxis_title="", plot_bgcolor='rgba(0,0,0,0)', height=400)
+                fig.update_traces(texttemplate='%{text:.2s}', textposition='outside')
+                
                 st.plotly_chart(fig, use_container_width=True)
                 
-                # المتصدر
-                leader = dept_group.iloc[-1]
-                if leader['المبلغ'] >= 570000:
-                     st.success(f"🥇 المتصدر حالياً: {leader['القسم']} (تجاوزوا هدف الـ 3 حقائب!)")
-                else:
-                     st.write(f"🥇 المتصدر حالياً: {leader['القسم']}")
-
+                # تحية للمتصدر
+                leader = level_df.iloc[-1]
+                if leader['المبلغ'] > 0:
+                    st.success(f"🥇 متصدر المستوى {level_name}: قسم {leader['القسم']} ({leader['المبلغ']:,} ج.س)")
             else:
-                st.write("لا توجد بيانات مسجلة لهذا المستوى حتى الآن.")
+                st.info("لا توجد بيانات مسجلة لهذا المستوى بعد.")
 
     st.divider()
-
-    # --- 💳 طرق المساهمة ---
-    with st.expander("💳 اضغط هنا لعرض حسابات التبرع", expanded=False):
+    
+    # --- 7. الحسابات البنكية ---
+    with st.expander("💳 اضغط هنا لعرض أرقام الحسابات", expanded=False):
         st.markdown("""
-        **بنك الخرطوم (بنكك):** `4195521` - زبيدة فؤاد عثمان
-        **بنك فيصل (فوري):** `52092340` - محمد جلال الدين الشيخ
-        **بنك أمدرمان الوطني (أوكاش):** `643344` - محمد جلال الدين الشيخ
-        
-        📲 **تأكد من إرسال الإشعار على الرقم:** `0112551093`
-        """)
-
-else:
-    st.error("⚠️ الرجاء التأكد من رابط ملف Google Sheet ووضعه داخل علامات تنصيص.")
-
-# زر تحديث
-if st.button('🔄 تحديث القائمة'):
-    st.cache_data.clear()
-    st.rerun()
+        <div style="text-align: center;">
+        <b>بنك الخر
