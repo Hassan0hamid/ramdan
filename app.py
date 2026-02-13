@@ -14,7 +14,7 @@ def load_data(sheet_url):
     return df
 
 # --- 🔴 هام: خت الرابط حقك هنا مكان الرابط ده ---
-sheet_url = https://docs.google.com/spreadsheets/d/e/2PACX-1vQpVaFIFaIybxYXbO6ECjCzUFVRiVERCTKy6D-hFRPyKkzwzwDgJamRCuDBHfKCsg85m5vM9fBbVf1U/pubhtml "رابط_الـ_CSV_بتاعك_من_الخطوة_الأولى" 
+sheet_url =  "https://docs.google.com/spreadsheets/d/e/2PACX-1vQpVaFIFaIybxYXbO6ECjCzUFVRiVERCTKy6D-hFRPyKkzwzwDgJamRCuDBHfKCsg85m5vM9fBbVf1U/pub?output=csv" 
 
 try:
     # تحميل البيانات
